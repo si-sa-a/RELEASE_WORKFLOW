@@ -1,0 +1,43 @@
+name: Dev Small Test
+
+on:
+  workflow_call:
+    inputs:
+      pull_request_ref:
+        required: true
+        type: string
+    outputs:
+      test_report_url:
+        value: ${{ jobs.small-test.outputs.test_report_url }}
+      build_version:
+        value: ${{ jobs.small-test.outputs.build_version }}
+
+jobs:
+  small-test:
+    name: Small Test
+    runs-on: ubuntu-latest
+    outputs:
+      test_report_url: ${{ steps.small-test.outputs.test_report_url }}
+      build_version: ${{ steps.build.outputs.build_version }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pull_request_ref }}
+
+      - name: static test実行
+        run: |
+          echo テストを実施
+
+      - name: Build
+        id: build
+        run: |
+          echo テストを実施
+          build_version=$(git rev-parse --short HEAD)
+          echo "build_version=$build_version" >> $GITHUB_OUTPUT
+
+      - name: small test実行
+        id: small-test
+        run: |
+          echo テストを実施
+          echo "test_report_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT

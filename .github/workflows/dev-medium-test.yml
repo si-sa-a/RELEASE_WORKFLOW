@@ -1,0 +1,36 @@
+name: Dev Medium Test
+
+on:
+  workflow_call:
+    inputs:
+      pull_request_ref:
+        required: true
+        type: string
+      build_version:
+        required: true
+        type: string
+    outputs:
+      test_report_url:
+        value: ${{ jobs.medium-test.outputs.test_report_url }}
+
+jobs:
+  medium-test:
+    name: Medium Test
+    runs-on: ubuntu-latest
+    outputs:
+      test_report_url: ${{ steps.medium-test.outputs.test_report_url }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pull_request_ref }}
+
+      - name: 任意の環境へデプロイ
+        run: |
+          echo デプロイを実施
+
+      - name: medium test実行
+        id: medium-test
+        run: |
+          echo テストを実施
+          echo "test_report_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT

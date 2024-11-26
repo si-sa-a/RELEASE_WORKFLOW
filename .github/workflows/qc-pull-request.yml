@@ -1,0 +1,88 @@
+name: Pull Request
+
+on:
+  pull_request_target:
+    branches: main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  VERIFICATION_MS_TEAMS_CHANNEL: ${{ vars.VERIFICATION_MS_TEAMS_CHANNEL}}
+  VERIFICATION_MS_TEAMS_WEBHOOK_URL: ${{ secrets.VERIFICATION_MS_TEAMS_WEBHOOK_URL }}
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  labeler:
+    name: Labeling to Pull Request
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Labeling to Pull Request
+        uses: actions/labeler@5
+        with:
+          configuration-path: .github/config/labeler.yml
+
+  small-test:
+    name: Small Test
+    uses: ./.github/workflows/dev-small-test.yml
+    with:
+      pull_request_ref: ${{ github.event.pull_request.head.ref }}
+
+  small-test-notification:
+    needs: [small-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: small test完了通知
+        run: echo TODO通知
+
+  deploy-package:
+    name: Deploy Package
+    needs: [small-test]
+    uses: ./.github/workflows/dev-deploy-package.yml
+    with:
+      pull_request_ref: ${{ github.event.pull_request.head.ref }}
+      build_version: ${{ needs.small-test.outputs.build_version }}
+
+  medium-test:
+    name: Medium Test
+    needs: [small-test, deploy-package]
+    uses: ./.github/workflows/dev-medium-test.yml
+    with:
+      pull_request_ref: ${{ github.event.pull_request.head.ref }}
+      build_version: ${{ needs.small-test.outputs.build_version }}
+
+  medium-test-notification:
+    needs: [deploy-package, medium-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: medium test完了通知
+        run: echo TODO通知
+
+  post-process:
+    name: 完了通知
+    needs: [medium-test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 成功通知
+        if: needs.medium-test.result == "success"
+        run: echo TODO成功通知
+      - name: 失敗通知
+        if: needs.medium-test.result != "success"
+        run: echo TODO失敗通知
