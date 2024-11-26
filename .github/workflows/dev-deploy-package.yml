@@ -1,0 +1,26 @@
+name: Dev Deploy Package
+
+on:
+  workflow_call:
+    inputs:
+      pull_request_ref:
+        required: true
+        type: string
+      build_version:
+        required: true
+        type: string
+
+jobs:
+  deploy-package:
+    name: Dev Deploy Package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.pull_request_ref }}
+
+      - name: デプロイ資源をパッケージ管理にpush
+        run: |
+          echo TODO
+          echo build_version: ${{ inputs.build_version }}
