@@ -81,8 +81,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 成功通知
-        if: needs.medium-test.result == "success"
+        if: needs.medium-test.result == 'success'
         run: echo TODO成功通知
       - name: 失敗通知
-        if: needs.medium-test.result != "success"
+        if: needs.medium-test.result != 'success'
         run: echo TODO失敗通知
