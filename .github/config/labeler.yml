@@ -10,5 +10,5 @@ documentation:
   - head-branch: ['doc(umentation)[/-].+']
   - change-files:
     - any-glob-to-any-file: '*.md'
- enhancement:
+enhancement:
   - head-branch: ['(enhancement|improve)[/-].+']
