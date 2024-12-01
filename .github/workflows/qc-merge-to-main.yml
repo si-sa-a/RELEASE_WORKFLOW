@@ -135,7 +135,7 @@ jobs:
     steps:
       - name: 対象バージョンのリリースノートにlatestを付ける
         run: |
-          gh release edit "{{ inputs.version }}" --repo ${{ github.repository }} --latest=true
+          gh release edit "${{ needs.pre-release.outputs.version }}" --repo ${{ github.repository }} --latest=true
       - name: 成功通知
         run: echo デプロイが成功しました。本番検証を開始してください
 
@@ -178,7 +178,7 @@ jobs:
     name: リバート&bugfixブランチ作成
     needs: [auto-deploy, manual-deploy, production-verification]
     if: (needs.auto-deploy.result == 'failure' || needs.manual-deploy.result == 'failure' || needs.production-verification.result == 'failure')
-    runs-on: ubuntu-latest  # 追加
+    runs-on: ubuntu-latest
     steps:
       - name: リバート&ブランチ作成
         run: echo TODO
