@@ -117,6 +117,7 @@ jobs:
         run: |
           echo inputs.version: ${{ inputs.version }}
           echo 開発が実装
+          exit 1
 
   manual-deploy:
     name: 本番デプロイ（手動）
