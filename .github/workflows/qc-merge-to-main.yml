@@ -98,7 +98,6 @@ jobs:
   post-merge-to-main:
     name: リリース作業完了通知
     needs: [pre-release, merge-to-main, unset-prerelease]
-    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: 成功通知
