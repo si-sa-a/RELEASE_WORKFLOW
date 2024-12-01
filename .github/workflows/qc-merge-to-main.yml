@@ -52,6 +52,8 @@ jobs:
 
   pre-release:
     name: リリースノート作成
+    needs: [approve-deploy]
+    if: needs.approve-deploy.result == 'success'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.release-notes.outputs.tag_name }}
@@ -127,7 +129,7 @@ jobs:
   success-deploy:
     name: デプロイ成功通知
     needs: [auto-deploy, manual-deploy]
-    if: success()
+    if: needs.auto-deploy.result == 'success' || needs.manual-deploy.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: 対象バージョンのリリースノートにlatestを付ける
@@ -139,7 +141,7 @@ jobs:
   failure-deploy:
     name: デプロイ失敗通知
     needs: [auto-deploy, manual-deploy]
-    if: failure()
+    if: needs.auto-deploy.result != 'success' || needs.manual-deploy.result != 'success'
     runs-on: ubuntu-latest
     steps:
       - name: 失敗通知
