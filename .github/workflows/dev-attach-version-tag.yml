@@ -1,0 +1,37 @@
+name: Dev Attach Version Tags
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      pr-number:
+        required: true
+        type: string
+      head-ref:
+        required: true
+        type: string
+      head-sha:
+        required: true
+        type: string
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  merge-to-main:
+    name: リリース作業
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: デプロイ資源にバージョンのタグをつける
+      - name: デプロイ資源にバージョンのタグをつける
+        run: |
+          echo version :${{ inputs.version }}
+          echo pr-number :${{ inputs.pr-number }}
+          echo head-ref :${{ inputs.head-ref }}
+          echo head-sha :${{ inputs.head-sha }}
