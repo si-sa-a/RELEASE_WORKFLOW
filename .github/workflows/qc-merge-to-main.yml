@@ -129,8 +129,8 @@ jobs:
 
   success-deploy:
     name: デプロイ成功通知
-    needs: [auto-deploy, manual-deploy]
-    if: success()
+    needs: [approve-deploy, auto-deploy, manual-deploy]
+    if: needs.approve-deploy.result == 'success' && !failure()
     runs-on: ubuntu-latest
     steps:
       - name: 対象バージョンのリリースノートにlatestを付ける
@@ -141,8 +141,8 @@ jobs:
 
   failure-deploy:
     name: デプロイ失敗通知
-    needs: [auto-deploy, manual-deploy]
-    if: failure()
+    needs: [approve-deploy, auto-deploy, manual-deploy]
+    if: needs.approve-deploy.result == 'success' && failure()
     runs-on: ubuntu-latest
     steps:
       - name: 失敗通知
