@@ -1,0 +1,199 @@
+name: Merge to Main
+on:
+  push:
+    branches: main
+    paths:
+      - "src/**"
+
+concurrency:
+  group: release
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  deploy-gate:
+    name: デプロイ事前確認
+    run-on: ubuntu-latest
+    steps:
+      - name: デプロイ条件チェック
+        run: echo TODO
+
+  pre-approve-deploy:
+    name: 本番デプロイ承認通知
+    needs: [deploy-gate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 本番デプロイ承認通知
+        run: echo TODO
+
+  approve-deploy:
+    name: 本番デプロイ承認
+    needs: [deploy-gate]
+    environment: production
+    runs-on: ubuntu-latest
+    steps:
+      - name: 自動デプロイ開始通知
+        run: echo 自動デプロイを開始しました
+
+  skipped-deploy:
+    name: デプロイキャンセル通知
+    needs: [deploy-gate, approve-deploy]
+    if: needs.deploy-gate.result =='success' && failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: キャンセル通知
+        run: echo デプロイが承認されませんでした
+
+  pre-release:
+    name: リリースノート作成
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release-notes.outputs.tag_name }}
+      pr-number: ${{ steps.ref-merge.outputs.pr-number }}
+      head-ref: ${{ steps.ref-merge.outputs.head-ref }}
+      head-sha: ${{ steps.ref-merge.outputs.head-sha }}
+    steps:
+      - nmae: リリースノート作成(prerelease)
+        id: release-notes
+        uses: release-drafter/release-drafter@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          config-name: config/release-drafter.yml
+          commitish: ${{ github.event.repository.default_branch }}
+          prerelease: true
+          publish: true
+
+      - name: マージ元のPull Requestにリリースするバージョンをコメント
+        id: ref-merge
+        # TODO
+
+  merge-to-main:
+    name: リリース作業
+    needs: [pre-release]
+    uses: ./.github/workflows/dev-attach-version-tag.yml
+    with:
+      version: ${{ needs.pre-release.outputs.version }}
+      pr-number: ${{ needs.pre-release.outputs.pr-number }}
+      head-ref: ${{ needs.pre-release.outputs.head-ref }}
+      head-sha: ${{ needs.pre-release.outputs.head-sha }}
+
+  unset-prerelease:
+    name: プレリリース解除
+    needs: [pre-release, merge-to-main]
+    runs-on: ubuntu-latest
+    steps:
+      - name: プレリリース解除
+        run: |
+          gh release edit "${{ needs.pre-release.outputs.version }}" --repo ${{ github.repository }} --prerelease=false --latest=false
+
+  post-merge-to-main:
+    name: リリース作業完了通知
+    needs: [pre-release, merge-to-main, unset-prerelease]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 成功通知
+        if: needs.merge-to-main.result == 'success'
+        run: echo リリース作業が成功しました
+      - name: 失敗通知
+        if: needs.merge-to-main.result != 'success'
+        run: echo リリース作業が失敗しました
+
+  auto-deploy:
+    needs: [pre-release, merge-to-main, unset-prerelease]
+    if: needs.merge-to-main.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        run: |
+          echo inputs.version: ${{ inputs.version }}
+          echo 開発が実装
+
+  manual-deploy:
+    name: 本番デプロイ（手動）
+    needs: [pre-release, merge-to-main, unset-prerelease]
+    if: needs.merge-to-main.result != 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - run exit 0
+
+  success-deploy:
+    name: デプロイ成功通知
+    needs: [auto-deploy, manual-deploy]
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 対象バージョンのリリースノートにlatestを付ける
+        run: |
+          gh release edit "{{ inputs.version }}" --repo ${{ github.repository }} --latest=true
+      - name: 成功通知
+        run: echo デプロイが成功しました。本番検証を開始してください
+
+  failure-deploy:
+    name: デプロイ失敗通知
+    needs: [auto-deploy, manual-deploy]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 失敗通知
+        run: echo デプロイが失敗しました
+
+  production-verification:
+    name: 本番検証
+    needs: [success-deploy]
+    if: needs.success-deploy.result == 'success' && always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  success-verification:
+    name: 本番検証成功通知
+    needs: [production-verification]
+    if: needs.production-verification.result == 'success' && always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 成功通知
+        run: echo 本番検証が成功しました
+
+  faillure-verification:
+    name: 本番検証
+    needs: [production-verification]
+    if: needs.production-verification.result == 'failure' && always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 失敗通知
+        run: echo 本番検証で問題が発生しました
+
+  failure-deploy-revert:
+    name: リバート&bugfixブランチ作成
+    needs: [auto-deploy, manual-deploy, production-verification]
+    if: (needs.auto-deploy.result == 'failure' || needs.manual-deploy.result == 'failure' || needs.production-verification.result == 'failure')
+    steps:
+      - name: リバート&ブランチ作成
+        run: echo TODO
+
+  success-revert:
+    name: リバート成功通知
+    needs: [failure-deploy-revert]
+    if: needs.failure-deploy-revert.result == 'success' && always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 成功通知
+        run: echo リバートが成功しました
+
+  faillure-revert:
+    name: リバート失敗通知
+    needs: [failure-deploy-revert]
+    if: needs.failure-deploy-revert.result == 'failure' && always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 失敗通知
+        run: echo リバートで問題が発生しました
+
