@@ -19,7 +19,7 @@ permissions:
 jobs:
   deploy-gate:
     name: デプロイ事前確認
-    run-on: ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: デプロイ条件チェック
         run: echo TODO
@@ -44,7 +44,7 @@ jobs:
   skipped-deploy:
     name: デプロイキャンセル通知
     needs: [deploy-gate, approve-deploy]
-    if: needs.deploy-gate.result =='success' && failure()
+    if: needs.deploy-gate.result == 'success' && failure()
     runs-on: ubuntu-latest
     steps:
       - name: キャンセル通知
@@ -59,7 +59,7 @@ jobs:
       head-ref: ${{ steps.ref-merge.outputs.head-ref }}
       head-sha: ${{ steps.ref-merge.outputs.head-sha }}
     steps:
-      - nmae: リリースノート作成(prerelease)
+      - name: リリースノート作成(prerelease)
         id: release-notes
         uses: release-drafter/release-drafter@v6
         env:
@@ -72,7 +72,7 @@ jobs:
 
       - name: マージ元のPull Requestにリリースするバージョンをコメント
         id: ref-merge
-        # TODO
+        run: echo TODO
 
   merge-to-main:
     name: リリース作業
@@ -122,7 +122,7 @@ jobs:
     if: needs.merge-to-main.result != 'success'
     runs-on: ubuntu-latest
     steps:
-      - run exit 0
+      - run: exit 0
 
   success-deploy:
     name: デプロイ成功通知
@@ -175,6 +175,7 @@ jobs:
     name: リバート&bugfixブランチ作成
     needs: [auto-deploy, manual-deploy, production-verification]
     if: (needs.auto-deploy.result == 'failure' || needs.manual-deploy.result == 'failure' || needs.production-verification.result == 'failure')
+    runs-on: ubuntu-latest  # 追加
     steps:
       - name: リバート&ブランチ作成
         run: echo TODO
@@ -196,4 +197,3 @@ jobs:
     steps:
       - name: 失敗通知
         run: echo リバートで問題が発生しました
-
