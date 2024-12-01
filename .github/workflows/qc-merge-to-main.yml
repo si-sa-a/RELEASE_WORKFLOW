@@ -166,7 +166,7 @@ jobs:
         run: echo 本番検証が成功しました
 
   faillure-verification:
-    name: 本番検証
+    name: 本番検証失敗通知
     needs: [production-verification]
     if: needs.production-verification.result == 'failure' && always()
     runs-on: ubuntu-latest
@@ -177,7 +177,7 @@ jobs:
   failure-deploy-revert:
     name: リバート&bugfixブランチ作成
     needs: [auto-deploy, manual-deploy, production-verification]
-    if: (needs.auto-deploy.result == 'failure' || needs.manual-deploy.result == 'failure' || needs.production-verification.result == 'failure')
+    if: needs.auto-deploy.result == 'failure' || needs.manual-deploy.result == 'failure' || needs.production-verification.result == 'failure'
     runs-on: ubuntu-latest
     steps:
       - name: リバート&ブランチ作成
