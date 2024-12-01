@@ -152,6 +152,7 @@ jobs:
     name: 本番検証
     needs: [success-deploy]
     if: needs.success-deploy.result == 'success' && always()
+    environment: production-verification
     runs-on: ubuntu-latest
     steps:
       - run: exit 0
