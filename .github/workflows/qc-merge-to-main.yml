@@ -129,7 +129,7 @@ jobs:
 
   success-deploy:
     name: デプロイ成功通知
-    needs: [approve-deploy, auto-deploy, manual-deploy]
+    needs: [approve-deploy, pre-release, auto-deploy, manual-deploy]
     if: needs.approve-deploy.result == 'success' && !failure()
     runs-on: ubuntu-latest
     steps:
