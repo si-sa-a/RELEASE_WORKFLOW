@@ -1,0 +1,53 @@
+name: Deploy to Production
+run-name: Deploy ${{ inputs.version }} to Production for fallback
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        type: string
+        required: true
+        description: "バージョン指定"
+  workflow_call:
+    secrets:
+      VERIFICATION_MS_TEAMS_WEBHOOK_URL:
+      required: true
+    inputs:
+      version:
+        type: string
+        required: true
+concurrency:
+  group: approve-deploy
+env:
+  GH_TOKEN: ${{ github.token }}
+permissions:
+  contents: write
+  pull-requests: read
+  actions: read
+jobs:
+  approve-deploy:
+    name: 本番デプロイ承認
+    if: ${{ github.event_name == 'workflow_dispatch'}}
+    environment: prod_approve
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+
+  auto-deploy:
+    name: 本番デプロイ（自動）
+    needs: [approve-deploy]
+    uses: ./.github/workflows/dev-deploy-to-production.yml
+    with:
+      version: ${{ inputs.version }}
+
+  production-verification:
+    name: 本番検証
+    environment: prod_verification
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
+    
+
+
+
+

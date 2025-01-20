@@ -1,0 +1,20 @@
+name: Dev Deploy Staging
+
+on:
+  workflow_call:
+    inputs:
+      pull_request_ref:
+        required: true
+        type: string
+      build_version:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: ステージングへのデプロイ
+        run: |
+          echo 開発が実装
