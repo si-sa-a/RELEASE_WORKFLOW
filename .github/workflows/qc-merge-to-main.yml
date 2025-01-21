@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: キャンセル通知
-        run: echo デプロイが承認されませんでした
+        run: echo デプロイが承認されませんでした。
 
   pre-release:
     name: リリースノート作成
